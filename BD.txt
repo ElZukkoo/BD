@@ -1,0 +1,83 @@
+CREATE DATABASE IF NOT EXISTS Compus;
+USE Compus;
+
+CREATE TABLE productos (
+    id_producto INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    precio DECIMAL(10, 2) NOT NULL,
+    imagen VARCHAR(255) -- Cambiado de BLOB a VARCHAR para almacenar URLs
+);
+
+INSERT INTO productos(nombre, descripcion, precio, imagen) VALUES 
+('Laptop Gaming ASUS ROG', 'Laptop para juegos con procesador Intel Core i9 y tarjeta gráfica RTX 3080.', 49999.99, 'https://example.com/asus-rog.jpg'),
+('MacBook Pro M2', 'MacBook Pro de 14 pulgadas con chip M2 y 16 GB de RAM.', 36999.00, 'https://example.com/macbook.jpg'),
+('Dell XPS 13', 'Ultrabook con pantalla táctil 4K y procesador Intel Core i7.', 32999.50, 'https://example.com/dell-xps.jpg'),
+('HP Pavilion 15', 'Laptop económica con procesador AMD Ryzen 5 y SSD de 512 GB.', 18999.00, 'https://example.com/hp-pavilion.jpg'),
+('Lenovo ThinkPad X1', 'Laptop empresarial con teclado retroiluminado y lector de huellas.', 27999.00, 'https://example.com/thinkpad.jpg'),
+('Microsoft Surface Laptop', 'Laptop convertible con pantalla táctil PixelSense y Windows 11.', 25999.00, 'https://example.com/surface.jpg'),
+('Alienware m15', 'Laptop gamer con pantalla de 240 Hz y tarjeta RTX 3070.', 44999.00, 'https://example.com/alienware.jpg'),
+('Acer Predator Helios', 'Laptop para gaming con teclado RGB y sistema de refrigeración avanzado.', 38999.00, 'https://example.com/acer-predator.jpg'),
+('Razer Blade 15', 'Laptop con chasis de aluminio y pantalla OLED de 165 Hz.', 51999.00, 'https://example.com/razer-blade.jpg'),
+('Chromebook Lenovo', 'Chromebook compacto con sistema operativo ChromeOS y almacenamiento en la nube.', 9999.00, 'https://example.com/chromebook.jpg');
+
+SELECT * FROM productos;
+
+CREATE TABLE usuarios (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
+    correo VARCHAR(100) NOT NULL UNIQUE,
+    contra VARCHAR(255) NOT NULL, -- Considerar almacenar como hash
+    tipo_usuario ENUM('administrador', 'cliente') NOT NULL
+);
+
+INSERT INTO usuarios (nombre_usuario, correo, contra, tipo_usuario) VALUES
+('admin1', 'admin1@example.com', 'contraseña_segura1', 'administrador'),
+('cliente1', 'cliente1@example.com', 'contraseña_segura2', 'cliente'),
+('admin2', 'admin2@example.com', 'contraseña_segura3', 'administrador'),
+('cliente2', 'cliente2@example.com', 'contraseña_segura4', 'cliente');
+
+CREATE TABLE carrito (
+    id_carrito INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_producto INT NOT NULL,
+    cantidad INT NOT NULL CHECK (cantidad > 0),
+    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_usuarios FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+
+    CONSTRAINT fk_productos FOREIGN KEY (id_producto) REFERENCES productos(id_producto)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+CREATE TABLE pago (
+    id_pago INT AUTO_INCREMENT PRIMARY KEY,
+    metodo_pago ENUM('Tarjeta de crédito', 'Tarjeta de débito', 'PayPal', 'Transferencia bancaria') NOT NULL,
+    estado_pago ENUM('Pendiente', 'Completado', 'Fallido', 'Reembolsado') NOT NULL,
+    fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE compra (
+    id_compra INT AUTO_INCREMENT PRIMARY KEY,
+    id_carrito INT NOT NULL,
+    id_pago INT NOT NULL,
+
+    -- Datos bancarios específicos
+    numero_tarjeta CHAR(16) NOT NULL, -- Número de tarjeta (16 dígitos)
+    nombre_titular VARCHAR(100) NOT NULL, -- Nombre del titular de la tarjeta
+    codigo_seguridad CHAR(3) NOT NULL, -- Código de seguridad (CVV, de 3 dígitos)
+    fecha_expiracion CHAR(5) NOT NULL, -- Fecha de expiración en formato MM/YY
+
+    -- Clave foránea para relacionar con la tabla 'carrito'
+    CONSTRAINT fk_carrito FOREIGN KEY (id_carrito) REFERENCES carrito(id_carrito)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+    
+    -- Clave foránea para relacionar con la tabla 'pago'
+    CONSTRAINT fk_pago FOREIGN KEY (id_pago) REFERENCES pago(id_pago)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
